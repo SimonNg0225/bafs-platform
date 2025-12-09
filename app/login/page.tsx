@@ -8,39 +8,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   
-  // 用來儲存輸入框的資料
   const [formData, setFormData] = useState({
     studentId: '',
     password: ''
   })
 
-  // 當按下登入按鈕時執行
   const handleLogin = async (e: any) => {
     e.preventDefault()
     setLoading(true)
     setErrorMsg('')
 
     try {
-      // 1. 去 Supabase 資料庫找這個學號
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('student_id', formData.studentId)
-        .single() // 只找一筆
+        .single()
 
-      if (error || !data) {
-        throw new Error('找不到此學號')
-      }
+      if (error || !data) throw new Error('找不到此學號')
+      if (data.password !== formData.password) throw new Error('密碼錯誤')
 
-      // 2. 檢查密碼 (注意：正式上線時我們會改用加密驗證，現在先用明文比較)
-      if (data.password !== formData.password) {
-        throw new Error('密碼錯誤')
-      }
-
-      // 3. 登入成功！將學生資料存入瀏覽器 (LocalStorage) 以便其他頁面使用
       localStorage.setItem('currentUser', JSON.stringify(data))
-      
-      // 4. 跳轉回首頁
       alert(`歡迎回來，${data.name}！`)
       router.push('/')
 
@@ -58,11 +46,11 @@ export default function LoginPage() {
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">學號 (Student ID)</label>
+            <label className="block text-sm font-medium text-gray-700">學號</label>
             <input
               type="text"
               required
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md text-black"
               value={formData.studentId}
               onChange={(e) => setFormData({...formData, studentId: e.target.value})}
               placeholder="例如: s23001"
@@ -70,7 +58,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">密碼 (Password)</label>
+            <label className="block text-sm font-medium text-gray-700">密碼</label>
             <input
               type="password"
               required
