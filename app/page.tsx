@@ -1,4 +1,4 @@
-'use client' // force update
+'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -34,29 +34,27 @@ export default function Home() {
     }
   }
 
- // 修改版：抓取「最新」的遊戲 (不管日期是哪一天)
- async function fetchTodayGame(studentId: string) {
-  // 1. 改成抓取「最新發布」的一題 (order by date desc)
-  const { data: game } = await supabase
-    .from('daily_games')
-    .select('*')
-    .order('date', { ascending: false }) // 日期由新到舊排
-    .limit(1) // 只拿第 1 個
-    .single()
+  // 修改版：抓取「最新」的遊戲 (不管日期是哪一天)
+  async function fetchTodayGame(studentId: string) {
+    const { data: game } = await supabase
+      .from('daily_games')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(1)
+      .single()
 
-  if (game) {
-    setTodayGame(game)
-    // 2. 檢查這位學生這題玩過了嗎？
-    const hasPlayed = localStorage.getItem(`played_${studentId}_${game.id}`)
-    if (hasPlayed) {
-      setGameStatus('DONE')
+    if (game) {
+      setTodayGame(game)
+      const hasPlayed = localStorage.getItem(`played_${studentId}_${game.id}`)
+      if (hasPlayed) {
+        setGameStatus('DONE')
+      } else {
+        setGameStatus('IDLE')
+      }
     } else {
-      setGameStatus('IDLE')
+      setGameStatus('IDLE') 
     }
-  } else {
-    setGameStatus('IDLE') // 資料庫真的完全沒題目
   }
-}
 
   async function refreshUserData(studentId: string) {
     const { data: userData } = await supabase.from('profiles').select('*').eq('student_id', studentId).single()
@@ -85,7 +83,6 @@ export default function Home() {
     if (data) setLeaderboard(data)
   }
 
-  // --- 提交答案邏輯 ---
   const handleSubmitAnswer = async () => {
     if (!selectedOption) return alert("請選擇一個答案")
     
@@ -110,7 +107,6 @@ export default function Home() {
     refreshUserData(user.student_id)
   }
 
-  // --- 創業功能 ---
   const handleCreateCompany = async (e: any) => {
     e.preventDefault()
     if (!newCompanyName.trim()) return alert("請輸入公司名稱")
@@ -129,7 +125,15 @@ export default function Home() {
   }
 
   if (loading) return <div className="p-10 text-center">載入中...</div>
-  if (!user) return <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4"><button onClick={() => router.push('/login')} className="bg-blue-600 text-white px-8 py-3 rounded-full">學生登入</button></main>
+  
+  if (!user) return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+      <h1 className="text-4xl font-bold text-blue-900 mb-4">BAFS 網上教學平台</h1>
+      <button onClick={() => router.push('/login')} className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition shadow-lg">
+        學生登入
+      </button>
+    </main>
+  )
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -140,7 +144,6 @@ export default function Home() {
             <div className="font-bold text-gray-800">{user.name} ({user.job_title})</div>
             <div className="text-xs text-green-600 font-mono">個人資產: ${user.assets?.toLocaleString()}</div>
           </div>
-          {/* 修復了這裡的斷點 */}
           <button onClick={handleLogout} className="text-red-500 text-sm border border-red-200 px-3 py-1 rounded hover:bg-red-50">
             登出
           </button>
@@ -259,7 +262,6 @@ export default function Home() {
                   <h2 className="text-3xl font-bold mb-1">{company.name}</h2>
                   <p className="opacity-80 mb-4">職位: {user.job_title}</p>
                   
-                  {/* 公司 ID 複製區 */}
                   <div 
                     onClick={() => {
                       navigator.clipboard.writeText(company.id)
@@ -284,7 +286,7 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              // 自由身介面 (創業/加入)
+              // 自由身介面
               <div className="bg-white border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col gap-6">
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-bold text-gray-800">選項一：創立新公司</h3>
@@ -302,10 +304,8 @@ export default function Home() {
                     </button>
                   </form>
                 </div>
-                {/* 簡單的分隔線 */}
                 <div className="w-full border-t border-gray-200"></div> 
                 <div className="text-center text-gray-500 text-sm">或是加入現有公司 (請向朋友索取代碼)</div>
-                {/* 加入公司表單 (簡化版) */}
                 <form onSubmit={async (e: any) => {
                   e.preventDefault()
                   const targetId = e.target.companyId.value.trim()
